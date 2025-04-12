@@ -17,7 +17,7 @@ import traceback
 from customer_data import Customer, TimeWindow, all_customers
 
 # Import the correct functions from the main file
-from main_custAndDriverSatisfaction_V5_tabu2opt_insertionWithConsis import (
+from main_custAndDriverSatisfaction_V6_tabu2opt_insertionWithConsis import (
     calculate_customer_satisfaction,
     insertion_heuristic,
     tabu_enhanced_two_opt,
@@ -85,7 +85,7 @@ def get_optimization_results():
         )
 
         # Calculate working time for this route (using definition from main file)
-        from main_custAndDriverSatisfaction_V4_tabu2opt import calculate_working_time
+        from main_custAndDriverSatisfaction_V6_tabu2opt_insertionWithConsis import calculate_working_time
         working_time = calculate_working_time(final_route)
 
         # Store results
