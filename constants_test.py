@@ -28,19 +28,19 @@ TIME_WINDOW_INTERVAL = 30   # 30-minute intervals for time windows
 # Driver satisfaction settings
 IDEAL_WORKING_HOURS = 8.5  # 8.5 hours (510 minutes) is the ideal working time including lunch
 MAX_WORKING_HOURS = 9.5    # 9.5 hours (570 minutes) is the maximum before severe dissatisfaction
-WORK_TIME_WEIGHT = 0.5     # Weight for work time consistency in driver satisfaction
-ROUTE_CONSISTENCY_WEIGHT = 0.5  # Weight for route consistency in driver satisfaction
-W_DRIVER = 3.0             # Weight for driver satisfaction in the objective function
+WORK_TIME_WEIGHT = 0.0     # Weight for work time consistency in driver satisfaction
+ROUTE_CONSISTENCY_WEIGHT = 1.0  # Weight for route consistency in driver satisfaction
+W_DRIVER = 0.0             # Weight for driver satisfaction in the objective function
 
 #Edge consistency bonus
-EDGE_CONSISTENCY_BONUS = 20.0 #Edge consistency bonus, 0 minimal, >0.5 is very strong
+EDGE_CONSISTENCY_BONUS = 10.0 #Edge consistency bonus, 0 minimal, >0.5 is very strong
 # Algorithm settings
-W_CUSTOMER = 1.0            # Weight for customer satisfaction in objective function
+W_CUSTOMER = 0.0            # Weight for customer satisfaction in objective function
 MAX_ITERATIONS_2OPT = 100   # Maximum iterations for 2-opt improvement
 
 # Tabu search parameters
-MAX_TABU_ITERATIONS = 100   # Maximum iterations for tabu search
-TABU_DIVERSIFICATION_THRESHOLD = 20  # Iterations without improvement before diversification
+MAX_TABU_ITERATIONS = 200   # Maximum iterations for tabu search
+TABU_DIVERSIFICATION_THRESHOLD = 50  # Iterations without improvement before diversification
 # TABU_TENURE removed - now calculated dynamically based on sqrt(N)
 
 # Visualization settings
