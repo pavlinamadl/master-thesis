@@ -1,4 +1,4 @@
-# constants.py
+
 """
 This file contains all the constants used across the delivery routing project.
 """
@@ -33,7 +33,7 @@ ROUTE_CONSISTENCY_WEIGHT = 0.5  # Weight for route consistency in driver satisfa
 W_DRIVER = 3.0             # Weight for driver satisfaction in the objective function
 
 #Edge consistency bonus
-EDGE_CONSISTENCY_BONUS = 20.0 #Edge consistency bonus, 0 minimal, >0.5 is very strong
+EDGE_CONSISTENCY_BONUS = 20 #Edge consistency bonus, 0 minimal, >0.5 is very strong
 # Algorithm settings
 W_CUSTOMER = 1.0            # Weight for customer satisfaction in objective function
 MAX_ITERATIONS_2OPT = 100   # Maximum iterations for 2-opt improvement

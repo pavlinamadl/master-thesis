@@ -10,14 +10,12 @@ from openpyxl.utils import get_column_letter
 # Import from custom modules
 from customer_data import Customer, TimeWindow, all_customers
 
-# Import the necessary functions from the main file
-from main_custAndDriverSatisfaction_V6_tabu2opt_insertionWithConsis import (
-    calculate_customer_satisfaction,
-    insertion_heuristic,
-    tabu_enhanced_two_opt,
-    attempt_additional_insertions,
-    calculate_working_time
-)
+# Import from modular structure
+from route_construction import insertion_heuristic
+from route_optimization import tabu_enhanced_two_opt
+from route_enhancement import attempt_additional_insertions
+from time_utils import calculate_customer_satisfaction
+from satisfaction_metrics import calculate_working_time
 
 # Import constants
 from constants import (

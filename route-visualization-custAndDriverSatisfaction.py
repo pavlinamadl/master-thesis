@@ -16,21 +16,24 @@ import traceback
 # Import from custom modules
 from customer_data import Customer, TimeWindow, all_customers
 
-# Import the correct functions from the main file
-from main_custAndDriverSatisfaction_V6_tabu2opt_insertionWithConsis import (
-    calculate_customer_satisfaction,
-    insertion_heuristic,
-    tabu_enhanced_two_opt,
-    attempt_additional_insertions
-)
+# Import from modular structure
+from route_construction import insertion_heuristic
+from route_optimization import tabu_enhanced_two_opt
+from route_enhancement import attempt_additional_insertions
+from time_utils import calculate_customer_satisfaction
+from satisfaction_metrics import calculate_working_time
+from distance_utils import distance
 
 # Import constants
 from constants import (
     BUFFER_MINUTES, DRIVER_START_TIME, DRIVER_FINISH_TIME,
     LUNCH_BREAK_START, LUNCH_BREAK_END,
-    W_CUSTOMER, W_DRIVER,
-    VISUALIZATION_DPI, VISUALIZATION_SIZE
+    W_CUSTOMER, W_DRIVER
 )
+
+# Define visualization constants if not in constants.py
+VISUALIZATION_DPI = 300
+VISUALIZATION_SIZE = (16, 12)
 
 # Define larger figure sizes for individual plots
 MAP_SIZE = (16, 12)
@@ -84,8 +87,7 @@ def get_optimization_results():
             previous_working_times=previous_working_times
         )
 
-        # Calculate working time for this route (using definition from main file)
-        from main_custAndDriverSatisfaction_V6_tabu2opt_insertionWithConsis import calculate_working_time
+        # Calculate working time for this route
         working_time = calculate_working_time(final_route)
 
         # Store results
@@ -149,7 +151,7 @@ def visualize_route_map(
             c = route[i]
             arrival_time = arrival_times[i]
             time_window = c.time_windows[day_idx]
-            # Use the correct function from main file
+            # Use the correct function from time_utils
             satisfaction = calculate_customer_satisfaction(arrival_time, time_window, buffer_minutes)
             color = get_satisfaction_color(satisfaction)
 
@@ -189,7 +191,7 @@ def visualize_route_map(
         customers_served = len(route) - 2  # Excluding depot at start and end
         total_satisfaction = 0
         for i in range(1, len(route) - 1):
-            # Use the correct function from main file
+            # Use the correct function from time_utils
             satisfaction = calculate_customer_satisfaction(
                 arrival_times[i],
                 route[i].time_windows[day_idx],
