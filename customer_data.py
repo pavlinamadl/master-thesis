@@ -22,6 +22,7 @@ class Customer(NamedTuple):
     y: float
     time_windows: List[TimeWindow]  # Time windows for each day
     service_time: float  # Service time in minutes for this customer
+    must_serve: bool = True  # Flag indicating if customer must be served (default True)
 
 
 def generate_time_windows(num_days: int = 5):
@@ -56,7 +57,7 @@ possible_time_windows = generate_time_windows(5)
 
 # Create depot with dummy time windows (not used)
 dummy_tw = [TimeWindow(start=0, end=0) for _ in range(5)]
-depot = Customer(0, DEPOT_X, DEPOT_Y, dummy_tw, 0.0)  # Depot has zero service time
+depot = Customer(0, DEPOT_X, DEPOT_Y, dummy_tw, 0.0, must_serve=False)  # Depot has zero service time and doesn't need to be "served"
 
 # Generate 75 random customers with time window constraints
 customers_list = [depot]
@@ -92,7 +93,7 @@ for i in range(1, 31):  # 30 customers
         time_window_counts[day][selected_window] += 1
         customer_time_windows.append(selected_window)
 
-    c = Customer(i, x, y, customer_time_windows, service_time)
+    c = Customer(i, x, y, customer_time_windows, service_time, must_serve=True)  # All customers must be served
     customers_list.append(c)
 
 # This variable will be imported by main.py
@@ -102,6 +103,7 @@ all_customers = customers_list
 if __name__ == "__main__":
     print(f"Generated {len(customers_list) - 1} customers plus depot")
     print(f"Depot location: ({DEPOT_X}, {DEPOT_Y})")
+    print(f"All customers have must_serve=True (must be included in each day's route)")
 
     # Print time window ranges
     print(f"\nTime windows: {len(possible_time_windows)} slots of {TIME_WINDOW_INTERVAL} minutes")
@@ -119,6 +121,7 @@ if __name__ == "__main__":
             print(f"Customer {customer.id}: ({customer.x:.2f}, {customer.y:.2f})")
             print(f"  Service time: {customer.service_time:.2f} minutes")
             print(f"  Time windows for Monday: {customer.time_windows[0].start}-{customer.time_windows[0].end} min")
+            print(f"  Must be served: {customer.must_serve}")
 
     print("...")
 

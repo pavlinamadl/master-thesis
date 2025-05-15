@@ -1,4 +1,4 @@
-# Customer and Driver Satisfaction Consistent Traveling Salesman Proble
+# Customer and Driver Satisfaction Consistent Traveling Salesman Problem
 
 ## Overview
 This system implements a sophisticated traveling salesman problem solution that simultaneously optimizes for dual objectives: customer satisfaction and driver satisfaction. The algorithm addresses the Consistent Traveling Salesman Problem with additional constraints for driver work consistency across multiple days. 
@@ -23,16 +23,22 @@ The system solves a complex optimization problem with the following components:
 - **Travel Speed**: Constant travel speed between locations
 
 ### Objectives
-1. **Maximize Customer Satisfaction**:
+1. **Customer Satisfaction**:
    - Higher when arrivals are within time windows
    - Decreases with early or late arrivals using non-linear functions
    - Different penalty rates for minor vs. major deviations
 
-2. **Maximize Driver Satisfaction**:
+2. **Driver Satisfaction**:
    - Consistent working hours across days
    - Consistent customers/routes across days
    - Working hours close to ideal duration
    - Reusing route segments from previous days
+
+3. **Weighted Balance**:
+   - The system uses a single parameter α (alpha) to balance these objectives
+   - Customer satisfaction has weight α (0-1)
+   - Driver satisfaction has weight (1-α)
+   - This allows easy adjustment of priorities by changing one parameter
 
 ## File Structure
 
@@ -48,8 +54,9 @@ Contains all configuration parameters and constants used throughout the system:
 - Satisfaction parameters
 - Time window settings
 - Driver satisfaction settings
-- Algorithm control parameters (weights, iterations)
+- **ALPHA** parameter (0-1) controlling weight between customer satisfaction (α) and driver satisfaction (1-α)
 - Edge consistency bonus parameters
+- Algorithm control parameters (weights, iterations)
 - Visualization settings
 
 #### `customer_data.py`
@@ -87,9 +94,9 @@ Contains functions for calculating driver satisfaction metrics:
 #### `route_construction.py`
 Implements the insertion heuristic for initial route creation:
 - `insertion_heuristic()`: Builds routes by iteratively inserting customers at best positions
-- Considers both customer satisfaction and driver satisfaction
+- Considers both customer satisfaction (weight α) and driver satisfaction (weight 1-α)
 - Special handling for edge consistency with previous days' routes
-- Zero-weight mode for forcing consistent routes
+- Zero-weight mode (α=0) for forcing consistent routes
 
 #### `route_optimization.py`
 Contains the tabu search implementation for route improvement:
@@ -103,7 +110,7 @@ Contains the tabu search implementation for route improvement:
 Post-optimization customer insertion:
 - `attempt_additional_insertions()`: Tries to add unvisited customers to optimized route
 - Special handling for consistency mode (skips insertions to maintain consistency)
-- Considers satisfaction impact of additional insertions
+- Considers satisfaction impact of additional insertions using α-weighted objective function
 
 ### Execution and Output
 
@@ -116,6 +123,7 @@ Main execution script that orchestrates the algorithm:
   2. Improves route using tabu-enhanced 2-opt
   3. Attempts additional insertions
 - Tracks metrics and prints detailed results
+- Includes alpha parameter information in output statistics
 - Handles day-specific weight adjustments for consistency
 
 #### `excel-exportResults.py`
@@ -126,6 +134,7 @@ Exports optimization results to Excel:
 - `create_customers_by_day_sheet()`: Matrix showing which customers are visited on which days
 - Color coding based on satisfaction scores
 - Summary statistics for each day and the entire week
+- Includes alpha parameter information in headers and filenames
 
 #### `route-visualization-custAndDriverSatisfaction.py`
 Generates visualizations of the routes and statistics:
@@ -134,6 +143,7 @@ Generates visualizations of the routes and statistics:
 - `visualize_weekly_stats()`: Comparative statistics across the week
 - Color coding based on satisfaction levels
 - Detailed annotations with arrival times and customer IDs
+- Includes alpha parameter value in titles, legends, and filenames
 
 ## Algorithm Architecture
 
@@ -141,7 +151,9 @@ The solution employs a three-phase metaheuristic approach:
 
 ### Phase 1: Initial Route Construction via Insertion Heuristic
 ```python
-def insertion_heuristic(customers, day_index, previous_routes, previous_working_times, w_cust, w_driver, edge_consistency_bonus, driver_start_time, driver_finish_time, buffer_minutes)
+def insertion_heuristic(customers, day_index, previous_routes, previous_working_times, 
+                        alpha, edge_consistency_bonus, driver_start_time, 
+                        driver_finish_time, buffer_minutes)
 ```
 
 The insertion heuristic builds an initial feasible route through an intelligent, step-by-step construction process:
@@ -170,10 +182,10 @@ The algorithm iteratively selects the best customer to insert at the best positi
      - Apply edge consistency bonus if the insertion reuses edges from previous days
 
 2. **Insertion Cost Calculation**
-   - Standard weighted cost formula: 
-     `insertion_cost = (1.0 - customer_satisfaction) * w_cust + (1.0 - driver_satisfaction) * w_driver - edge_bonus`
+   - Parameterized weighted cost formula: 
+     `insertion_cost = (1.0 - customer_satisfaction) * alpha + (1.0 - driver_satisfaction) * (1.0 - alpha) - edge_bonus`
    - Special "zero-weight mode" for maximum consistency:
-     - If `w_cust = 0.0` and `w_driver = 0.0`, then:
+     - If `alpha = 0.0`, then:
      - `insertion_cost = -1000.0` for consistent edges (extremely favorable)
      - `insertion_cost = 1000.0` for new edges (extremely unfavorable)
      - This effectively forces the algorithm to prioritize edge consistency above all else
@@ -214,7 +226,7 @@ After construction is complete, the algorithm calculates final metrics:
    - Calculate final driver satisfaction: `driver_satisfaction, _, _ = calculate_driver_satisfaction(...)`
 
 3. **Calculate Total Cost**
-   - Weighted objective function: `total_cost = (1.0 - customer_satisfaction) * w_cust + (1.0 - driver_satisfaction) * w_driver`
+   - Weighted objective function: `total_cost = (1.0 - customer_satisfaction) * alpha + (1.0 - driver_satisfaction) * (1.0 - alpha)`
 
 4. **Return Values**
    - Returns tuple containing: (route, total_cost, arrival_times, customer_satisfaction, driver_satisfaction)
@@ -223,7 +235,9 @@ This construction heuristic effectively balances multiple competing objectives: 
 
 ### Phase 2: Route Improvement via Tabu Search with 2-Opt Moves
 ```python
-def tabu_enhanced_two_opt(route, day_index, previous_routes, previous_working_times, w_cust, w_driver, edge_consistency_bonus, driver_start_time, buffer_minutes, max_iterations, diversification_threshold)
+def tabu_enhanced_two_opt(route, day_index, previous_routes, previous_working_times, 
+                         alpha, edge_consistency_bonus, driver_start_time, buffer_minutes, 
+                         max_iterations, diversification_threshold)
 ```
 
 The tabu-enhanced 2-opt algorithm is a sophisticated metaheuristic that systematically improves routes through intelligent local search. This implementation includes advanced features such as dynamic tabu tenure, aspiration criteria, and strategic diversification.
@@ -246,7 +260,7 @@ The tabu-enhanced 2-opt algorithm is a sophisticated metaheuristic that systemat
 3. **Initial Cost Calculation**
    - Calculate customer satisfaction for each served customer based on arrival times
    - Calculate driver satisfaction considering work time and consistency
-   - Compute weighted objective function: `best_cost = (1.0 - best_customer_satisfaction) * w_cust + (1.0 - best_driver_satisfaction) * w_driver`
+   - Compute weighted objective function: `best_cost = (1.0 - best_customer_satisfaction) * alpha + (1.0 - best_driver_satisfaction) * (1.0 - alpha)`
    - Set current cost equal to best: `current_cost = best_cost`
 
 4. **Tabu Search Structures**
@@ -294,16 +308,16 @@ The search iterates until either the maximum iterations are reached or no furthe
          edge_consistency_penalty = -consistent_edges * edge_consistency_bonus
          
          # Calculate neighbor cost with consistency consideration
-         if w_cust == 0.0 and w_driver == 0.0:
+         if alpha == 0.0:
              neighbor_cost = -consistent_edges  # More consistent = better
          else:
-             neighbor_cost = (1.0 - neighbor_customer_satisfaction) * w_cust + \
-                            (1.0 - neighbor_driver_satisfaction) * w_driver + \
+             neighbor_cost = (1.0 - neighbor_customer_satisfaction) * alpha + \
+                            (1.0 - neighbor_driver_satisfaction) * (1.0 - alpha) + \
                             edge_consistency_penalty
      else:
          # For Monday, use regular calculation
-         neighbor_cost = (1.0 - neighbor_customer_satisfaction) * w_cust + \
-                         (1.0 - neighbor_driver_satisfaction) * w_driver
+         neighbor_cost = (1.0 - neighbor_customer_satisfaction) * alpha + \
+                         (1.0 - neighbor_driver_satisfaction) * (1.0 - alpha)
      ```
 
 4. **Tabu Status and Aspiration Criterion**
@@ -358,22 +372,24 @@ The search iterates until either the maximum iterations are reached or no furthe
 4. **Edge Consistency Consideration**
    - For days after Monday, the algorithm counts edges consistent with previous day
    - Applies a bonus proportional to the number of consistent edges
-   - In zero-weight mode, optimization focuses exclusively on maximizing consistent edges
+   - In zero-weight mode (α=0), optimization focuses exclusively on maximizing consistent edges
 
 The tabu-enhanced 2-opt algorithm significantly improves upon the initial route by strategically exploring the solution space while avoiding previously visited solutions. The dynamic tabu tenure and diversification mechanisms ensure effective exploration regardless of problem size.
 
 ### Phase 3: Post-Optimization Customer Insertion
 ```python
-def attempt_additional_insertions(route, unvisited_customers, day_index, previous_routes, previous_working_times, w_cust, w_driver, edge_consistency_bonus, driver_start_time, driver_finish_time, buffer_minutes)
+def attempt_additional_insertions(route, unvisited_customers, day_index, previous_routes, 
+                                 previous_working_times, alpha, edge_consistency_bonus, 
+                                 driver_start_time, driver_finish_time, buffer_minutes)
 ```
 
 The post-optimization insertion phase attempts to maximize service capacity by intelligently inserting additional customers into the already optimized route. This phase is crucial for ensuring that all available capacity is utilized efficiently.
 
 #### Consistency Preservation Mode
 ```python
-# Skip additional insertions on days after Monday when using zero weights
+# Skip additional insertions on days after Monday when using alpha=0
 # to maintain consistent routes
-if day_index > 0 and w_cust == 0.0 and w_driver == 0.0:
+if day_index > 0 and alpha == 0.0:
     print("Skipping additional insertions to maintain route consistency")
 ```
 
@@ -599,112 +615,3 @@ The algorithm's behavior is controlled through numerous parameters defined in `c
 - `DRIVER_FINISH_TIME`: Minutes since midnight when driver must finish (e.g., 1020 for 5:00 PM)
 - `BUFFER_MINUTES`: Allowed buffer zone around time windows before satisfaction drops
 - `LUNCH_BREAK_START`: Minutes since midnight when lunch begins
-- `LUNCH_BREAK_END`: Minutes since midnight when lunch ends
-- `SATISFACTION_STEEP_THRESHOLD`: Deviation threshold where satisfaction penalty becomes steeper
-
-### Performance Parameters
-- `SPEED_METERS_PER_MINUTE`: Travel speed in meters per minute
-- `W_CUSTOMER`: Weight for customer satisfaction (higher values prioritize customers)
-- `W_DRIVER`: Weight for driver satisfaction (higher values prioritize drivers)
-- `IDEAL_WORKING_HOURS`: Target duration of driver's working day in hours
-- `MAX_WORKING_HOURS`: Maximum acceptable working day duration in hours
-
-### Algorithm Control Parameters
-- `WORK_TIME_WEIGHT`: Importance of work time component in driver satisfaction
-- `ROUTE_CONSISTENCY_WEIGHT`: Importance of route consistency in driver satisfaction
-- `MAX_TABU_ITERATIONS`: Maximum number of iterations for tabu search
-- `TABU_DIVERSIFICATION_THRESHOLD`: Iterations without improvement before diversification
-- `EDGE_CONSISTENCY_BONUS`: Bonus factor for maintaining consistent route edges
-
-## Data Structures
-
-### Customer Data
-```python
-class TimeWindow(NamedTuple):
-    start: float  # Minutes since midnight
-    end: float    # Minutes since midnight
-
-class Customer:
-    id: int       # Unique identifier
-    x: float      # X coordinate
-    y: float      # Y coordinate
-    service_time: float  # Minutes required for service
-    time_windows: List[TimeWindow]  # Time windows for each day
-```
-
-The system uses:
-- **TimeWindow**: Named tuple representing preferred visit times
-- **Customer**: Class containing location, service requirements, and time preferences
-- **Depot**: Special customer with ID 0 representing start/end point
-
-## Execution Flow
-
-The `main()` function orchestrates the full execution:
-
-1. **Initialization**: Loads customer data and prepares data structures
-2. **Weekly Planning**: Iterates through five days (Monday-Friday)
-   - Applies different weighting strategies based on day of week
-   - Tracks routes and working times for consistency calculations
-3. **Daily Route Construction**: For each day:
-   - Creates initial route using insertion heuristic
-   - Identifies unvisited customers
-   - Improves route using tabu-enhanced 2-opt
-   - Attempts additional insertions post-optimization
-   - Calculates and stores performance metrics
-4. **Results Reporting**: Generates detailed output including:
-   - Route details with customer IDs
-   - Working times and satisfaction metrics
-   - Start and end times for each day
-   - Individual customer service details with time windows, arrival times, deviations
-   - Overall weekly performance statistics
-
-## Advanced Features
-
-### Route Consistency Mechanisms
-The system employs multiple strategies to maintain consistency:
-
-1. **Direct Route Similarity**:
-   - Jaccard similarity calculation (intersection over union)
-   - Higher weighting for customers that appear in multiple days
-
-2. **Edge Consistency Bonus**:
-   - Identifies route segments (edges) used in previous days
-   - Applies bonus factor to favor reusing these edges
-   - Special handling for zero-weight mode that prioritizes perfect consistency
-
-3. **Working Time Consistency**:
-   - Tracks daily working times across the week
-   - Penalizes deviations from average of previous days
-   - Non-linear penalty function for large deviations
-
-### Adaptive Tabu Mechanisms
-The tabu search component features several advanced techniques:
-
-1. **Dynamic Tabu Tenure**:
-   - Automatically scales with problem size (route length)
-   - Based on square root of number of customers plus one
-   - Prevents cycling in larger problems
-
-2. **Strategic Diversification**:
-   - Triggered after predefined number of non-improving iterations
-   - Performs multiple random 2-opt moves to escape local optima
-   - Recalculates tabu tenure if route size changes
-
-3. **Symmetric Tabu Treatment**:
-   - Both a move and its inverse are added to the tabu list
-   - Prevents immediate reversal of moves
-
-### Satisfaction Functions
-The system uses sophisticated non-linear satisfaction functions:
-
-1. **Customer Satisfaction**:
-   - Multi-stage function with different slopes based on deviation severity
-   - Perfect (1.0) within time window
-   - Linear decrease within buffer zone
-   - Medium decrease up to defined threshold
-   - Asymptotic decrease for severe deviations
-
-2. **Driver Satisfaction**:
-   - Work time satisfaction based on ideal and maximum hours
-   - Work time consistency uses percentage deviation approach
-   - Route consistency uses Jaccard similarity

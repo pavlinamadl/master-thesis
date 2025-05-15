@@ -10,18 +10,16 @@ from openpyxl.utils import get_column_letter
 # Import from custom modules
 from customer_data import Customer, TimeWindow, all_customers
 
-# Import from modular structure
-from route_construction import insertion_heuristic
-from route_optimization import tabu_enhanced_two_opt
-from route_enhancement import attempt_additional_insertions
-from time_utils import calculate_customer_satisfaction
-from satisfaction_metrics import calculate_working_time
+# Import from optimization engine
+from optimization_engine import get_optimization_results
 
 # Import constants
 from constants import (
     BUFFER_MINUTES, DRIVER_START_TIME, DRIVER_FINISH_TIME,
-    W_CUSTOMER, W_DRIVER
+    ALPHA  # Using ALPHA instead of W_CUSTOMER and W_DRIVER
 )
+from time_utils import calculate_customer_satisfaction
+from satisfaction_metrics import calculate_working_time
 
 
 def format_time(minutes):
@@ -29,68 +27,6 @@ def format_time(minutes):
     hours = int(minutes // 60)
     mins = int(minutes % 60)
     return f"{hours:02d}:{mins:02d}"
-
-
-def get_optimization_results():
-    """Run the optimization and get route data for all days"""
-    print("Generating route data...")
-
-    # Run for 5 days (Mon-Fri)
-    all_routes = []
-    all_arrival_times = []
-    all_working_times = []
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    all_unvisited_customers = []
-
-    for day_idx in range(5):
-        print(f"Processing {days[day_idx]}...")
-
-        # Previous routes and working times for driver satisfaction calculation
-        previous_routes = all_routes.copy()
-        previous_working_times = all_working_times.copy()
-
-        # Step 1: Create initial route using insertion heuristic
-        initial_route, initial_cost, _, initial_cust_sat, initial_driver_sat = insertion_heuristic(
-            customers=all_customers,
-            day_index=day_idx,
-            previous_routes=previous_routes,
-            previous_working_times=previous_working_times
-        )
-
-        # Identify unvisited customers from the initial route
-        visited_customer_ids = {customer.id for customer in initial_route}
-        unvisited_customers = [customer for customer in all_customers if
-                               customer.id not in visited_customer_ids and customer.id != 0]  # Exclude depot
-
-        # Step 2: Improve route using tabu-enhanced 2-opt
-        improved_route, improved_cost, improved_arrival_times, improved_cust_sat, improved_driver_sat = tabu_enhanced_two_opt(
-            route=initial_route,
-            day_index=day_idx,
-            previous_routes=previous_routes,
-            previous_working_times=previous_working_times
-        )
-
-        # Step 3: Attempt to insert additional unvisited customers
-        final_route, final_cost, arrival_times, customer_sat, driver_sat = attempt_additional_insertions(
-            route=improved_route,
-            unvisited_customers=unvisited_customers,
-            day_index=day_idx,
-            previous_routes=previous_routes,
-            previous_working_times=previous_working_times
-        )
-
-        # Calculate working time for this route
-        working_time = calculate_working_time(final_route)
-
-        # Store results
-        all_routes.append(final_route)
-        all_arrival_times.append(arrival_times)
-        all_working_times.append(working_time)
-        all_unvisited_customers.append(unvisited_customers)
-
-        print(f"  Route created with {len(final_route) - 2} customers")
-
-    return all_routes, all_arrival_times, days, all_unvisited_customers
 
 
 def create_routes_comparison_sheet(wb, all_routes, all_arrival_times, days):
@@ -110,6 +46,7 @@ def create_routes_comparison_sheet(wb, all_routes, all_arrival_times, days):
 
     # Define header rows
     ws.cell(row=1, column=1, value="Route Comparison").font = Font(bold=True, size=14)
+    ws.cell(row=1, column=6, value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
 
     col = 1
     for day in days:
@@ -204,6 +141,7 @@ def create_customer_details_sheet(wb, all_routes, all_arrival_times, days):
     header_font = Font(bold=True)
 
     ws.cell(row=1, column=1, value="Customer Service Details").font = Font(bold=True, size=14)
+    ws.cell(row=1, column=3, value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
 
     for col, header in enumerate(columns, 1):
         ws.cell(row=2, column=col, value=header).font = header_font
@@ -283,6 +221,7 @@ def create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisit
     header_font = Font(bold=True)
 
     ws.cell(row=1, column=1, value="Customer Visits By Day").font = Font(bold=True, size=14)
+    ws.cell(row=1, column=3, value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
 
     ws.cell(row=2, column=1, value="Customer ID").font = header_font
     ws.cell(row=2, column=1).fill = header_fill
@@ -384,10 +323,15 @@ def create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisit
 def create_excel_report():
     """Create an Excel workbook with multiple sheets for the route optimization results"""
     try:
-        print("Starting optimization and Excel report generation...")
+        print("Starting Excel report generation...")
+        print(f"Using alpha = {ALPHA} for satisfaction weighting")
 
-        # Get optimization results
-        all_routes, all_arrival_times, days, all_unvisited_customers = get_optimization_results()
+        # Get optimization results from central engine
+        results = get_optimization_results()
+        all_routes = results['routes']
+        all_arrival_times = results['arrival_times']
+        days = results['days']
+        all_unvisited_customers = results['unvisited_customers']
 
         # Create a new workbook
         wb = Workbook()
@@ -406,7 +350,7 @@ def create_excel_report():
         create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisited_customers, days)
 
         # Save the workbook
-        filename = "route_optimization_report.xlsx"
+        filename = f"route_optimization_report_alpha_{ALPHA}.xlsx"
         wb.save(filename)
         print(f"Excel report saved to {filename}")
 

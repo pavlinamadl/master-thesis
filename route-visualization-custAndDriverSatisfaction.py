@@ -10,94 +10,27 @@ from typing import List
 import math
 import os
 import sys
-import io
 import traceback
 
 # Import from custom modules
 from customer_data import Customer, TimeWindow, all_customers
-
-# Import from modular structure
-from route_construction import insertion_heuristic
-from route_optimization import tabu_enhanced_two_opt
-from route_enhancement import attempt_additional_insertions
-from time_utils import calculate_customer_satisfaction
-from satisfaction_metrics import calculate_working_time
-from distance_utils import distance
+from optimization_engine import get_optimization_results
 
 # Import constants
 from constants import (
     BUFFER_MINUTES, DRIVER_START_TIME, DRIVER_FINISH_TIME,
     LUNCH_BREAK_START, LUNCH_BREAK_END,
-    W_CUSTOMER, W_DRIVER
+    ALPHA, VISUALIZATION_DPI  # Using ALPHA instead of W_CUSTOMER and W_DRIVER
 )
+from distance_utils import distance
+from time_utils import calculate_customer_satisfaction
 
 # Define visualization constants if not in constants.py
-VISUALIZATION_DPI = 300
 VISUALIZATION_SIZE = (16, 12)
 
 # Define larger figure sizes for individual plots
 MAP_SIZE = (16, 12)
 TIMELINE_SIZE = (16, 12)
-
-
-def get_optimization_results():
-    """Get route data from running the optimization"""
-    print("Generating route data...")
-
-    # Run for 5 days (Mon-Fri)
-    all_routes = []
-    all_arrival_times = []
-    days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday"]
-    all_working_times = []  # Required for driver satisfaction calculation
-
-    for day_idx in range(5):
-        print(f"Processing {days[day_idx]}...")
-
-        # Previous routes and working times for driver satisfaction calculation
-        previous_routes = all_routes.copy()
-        previous_working_times = all_working_times.copy()
-
-        # Step 1: Create initial route using insertion heuristic
-        initial_route, initial_cost, _, initial_cust_sat, initial_driver_sat = insertion_heuristic(
-            customers=all_customers,
-            day_index=day_idx,
-            previous_routes=previous_routes,
-            previous_working_times=previous_working_times
-        )
-
-        # Identify unvisited customers from the initial route
-        visited_customer_ids = {customer.id for customer in initial_route}
-        unvisited_customers = [customer for customer in all_customers if
-                               customer.id not in visited_customer_ids and customer.id != 0]  # Exclude depot
-
-        # Step 2: Improve route using tabu-enhanced 2-opt
-        improved_route, improved_cost, improved_arrival_times, improved_cust_sat, improved_driver_sat = tabu_enhanced_two_opt(
-            route=initial_route,
-            day_index=day_idx,
-            previous_routes=previous_routes,
-            previous_working_times=previous_working_times
-        )
-
-        # Step 3: Attempt to insert additional unvisited customers
-        final_route, final_cost, arrival_times, customer_sat, driver_sat = attempt_additional_insertions(
-            route=improved_route,
-            unvisited_customers=unvisited_customers,
-            day_index=day_idx,
-            previous_routes=previous_routes,
-            previous_working_times=previous_working_times
-        )
-
-        # Calculate working time for this route
-        working_time = calculate_working_time(final_route)
-
-        # Store results
-        all_routes.append(final_route)
-        all_arrival_times.append(arrival_times)
-        all_working_times.append(working_time)
-
-        print(f"  Route created with {len(final_route) - 2} customers")
-
-    return all_routes, all_arrival_times, days
 
 
 def visualize_route_map(
@@ -134,10 +67,10 @@ def visualize_route_map(
     try:
         # Create figure for the map
         fig, ax = plt.subplots(figsize=MAP_SIZE)
-        fig.suptitle(f'Route Map for {day_name}', fontsize=18)
+        fig.suptitle(f'Route Map for {day_name} (Alpha = {ALPHA})', fontsize=18)
 
         # Set up the axes
-        ax.set_title('Geographical Route', fontsize=16)
+        ax.set_title(f'Geographical Route (Customer Weight: {ALPHA}, Driver Weight: {1.0 - ALPHA})', fontsize=16)
         ax.set_xlabel('X coordinate (meters)', fontsize=14)
         ax.set_ylabel('Y coordinate (meters)', fontsize=14)
 
@@ -205,7 +138,8 @@ def visualize_route_map(
             f"Customers served: {customers_served}\n"
             f"Average satisfaction: {avg_satisfaction:.2f}\n"
             f"Route start: {format_time(arrival_times[0])}\n"
-            f"Route end: {format_time(arrival_times[-1])}"
+            f"Route end: {format_time(arrival_times[-1])}\n"
+            f"Alpha: {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})"
         )
 
         fig.text(0.02, 0.02, summary_text, fontsize=12, bbox=dict(facecolor='white', alpha=0.7))
@@ -215,7 +149,7 @@ def visualize_route_map(
 
         # Save to file
         if save_to_file:
-            filename = f"route_map_{day_name.lower()}.png"
+            filename = f"route_map_{day_name.lower()}_alpha_{ALPHA}.png"
             print(f"Saving map to {filename}")
             plt.savefig(filename, dpi=VISUALIZATION_DPI, bbox_inches='tight')
 
@@ -272,10 +206,12 @@ def visualize_time_windows(
     try:
         # Create figure for the time windows
         fig, ax = plt.subplots(figsize=TIMELINE_SIZE)
-        fig.suptitle(f'Time Window Satisfaction for {day_name}', fontsize=18)
+        fig.suptitle(f'Time Window Satisfaction for {day_name} (Alpha = {ALPHA})', fontsize=18)
 
         # Set up the axes
-        ax.set_title('Customer Time Windows and Arrival Times', fontsize=16)
+        ax.set_title(
+            f'Customer Time Windows and Arrival Times (Customer Weight: {ALPHA}, Driver Weight: {1.0 - ALPHA})',
+            fontsize=16)
         ax.set_xlabel('Customer (in route order)', fontsize=14)
         ax.set_ylabel('Time (minutes from midnight)', fontsize=14)
 
@@ -347,7 +283,7 @@ def visualize_time_windows(
 
         # Save to file
         if save_to_file:
-            filename = f"route_timeline_{day_name.lower()}.png"
+            filename = f"route_timeline_{day_name.lower()}_alpha_{ALPHA}.png"
             print(f"Saving timeline to {filename}")
             plt.savefig(filename, dpi=VISUALIZATION_DPI, bbox_inches='tight')
 
@@ -431,7 +367,7 @@ def visualize_weekly_stats(
     try:
         # Create figure for the weekly stats
         fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(14, 12))
-        fig.suptitle('Weekly Route Statistics', fontsize=18)
+        fig.suptitle(f'Weekly Route Statistics (Alpha = {ALPHA})', fontsize=18)
 
         # Calculate statistics for each day
         customers_served = []
@@ -474,7 +410,7 @@ def visualize_weekly_stats(
 
         # Plot customers served
         ax1.bar(day_names, customers_served, color='blue', alpha=0.7)
-        ax1.set_title('Customers Served by Day', fontsize=14)
+        ax1.set_title(f'Customers Served by Day (Customer Weight: {ALPHA}, Driver Weight: {1.0 - ALPHA})', fontsize=14)
         ax1.set_ylabel('Number of Customers', fontsize=12)
         for i, v in enumerate(customers_served):
             ax1.text(i, v + 0.5, str(v), ha='center', fontsize=10)
@@ -508,7 +444,7 @@ def visualize_weekly_stats(
 
         # Save to file
         if save_to_file:
-            filename = "weekly_statistics.png"
+            filename = f"weekly_statistics_alpha_{ALPHA}.png"
             print(f"Saving weekly statistics to {filename}")
             plt.savefig(filename, dpi=VISUALIZATION_DPI, bbox_inches='tight')
 
@@ -529,9 +465,14 @@ def visualize_weekly_stats(
 
 if __name__ == "__main__":
     try:
-        # Get optimization results
-        print("Starting route optimization and visualization...")
-        all_routes, all_arrival_times, days = get_optimization_results()
+        # Get optimization results from centralized engine
+        print("Starting route optimization visualization...")
+        print(f"Using alpha = {ALPHA} (customer weight: {ALPHA}, driver weight: {1.0 - ALPHA})")
+
+        results = get_optimization_results()
+        all_routes = results['routes']
+        all_arrival_times = results['arrival_times']
+        days = results['days']
 
         # Create visualizations
         print("\nCreating visualizations...")
