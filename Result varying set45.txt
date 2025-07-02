@@ -1,0 +1,291 @@
+alpha 1.0 with 45 cust prob 0.5
+
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 4511.43 minutes
+  Average deviation per customer: 43.38 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 1.0 (customer weight: 1.0, driver weight: 0.0)
+  Total cost of solution (sum of daily objectives): 0.95
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 849283.73 meters (849.28 km)
+  Average daily distance: 169856.75 meters (169.86 km)
+  Daily distances breakdown:
+    Monday: 133165.57 meters (133.17 km)
+    Tuesday: 177654.43 meters (177.65 km)
+    Wednesday: 185452.83 meters (185.45 km)
+    Thursday: 177979.72 meters (177.98 km)
+    Friday: 175031.17 meters (175.03 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.7825
+  Average Customer Satisfaction: 0.8101
+  Average Number of Same Edges/Day (consecutive comparisons): 0.25
+    Edge counts: Tue vs Mon=0, Wed vs Tue=0, Thu vs Wed=1, Fri vs Thu=0
+  Edge Bonus (Total): 0.0500
+  Average Objective Value/Day: 0.8101
+
+
+aplha 0.9 with 45 cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 4752.76 minutes
+  Average deviation per customer: 45.70 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.9 (customer weight: 0.9, driver weight: 0.09999999999999998)
+  Total cost of solution (sum of daily objectives): 1.00
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 792515.52 meters (792.52 km)
+  Average daily distance: 158503.10 meters (158.50 km)
+  Daily distances breakdown:
+    Monday: 130570.34 meters (130.57 km)
+    Tuesday: 158317.77 meters (158.32 km)
+    Wednesday: 180504.13 meters (180.50 km)
+    Thursday: 158628.11 meters (158.63 km)
+    Friday: 164495.17 meters (164.50 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.7760
+  Average Customer Satisfaction: 0.8022
+  Average Number of Same Edges/Day (consecutive comparisons): 0.00
+    Edge counts: Tue vs Mon=0, Wed vs Tue=0, Thu vs Wed=0, Fri vs Thu=0
+  Edge Bonus (Total): 0.0000
+  Average Objective Value/Day: 0.7996
+
+
+alpha 0.8 with 45 cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 4299.57 minutes
+  Average deviation per customer: 41.34 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.8 (customer weight: 0.8, driver weight: 0.19999999999999996)
+  Total cost of solution (sum of daily objectives): 1.04
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 820710.18 meters (820.71 km)
+  Average daily distance: 164142.04 meters (164.14 km)
+  Daily distances breakdown:
+    Monday: 136183.82 meters (136.18 km)
+    Tuesday: 152138.50 meters (152.14 km)
+    Wednesday: 185440.19 meters (185.44 km)
+    Thursday: 165998.04 meters (166.00 km)
+    Friday: 180949.63 meters (180.95 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.7838
+  Average Customer Satisfaction: 0.7948
+  Average Number of Same Edges/Day (consecutive comparisons): 1.50
+    Edge counts: Tue vs Mon=2, Wed vs Tue=0, Thu vs Wed=3, Fri vs Thu=1
+  Edge Bonus (Total): 0.3000
+  Average Objective Value/Day: 0.8046
+
+alpha 0.7 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 5654.46 minutes
+  Average deviation per customer: 54.37 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.7 (customer weight: 0.7, driver weight: 0.30000000000000004)
+  Total cost of solution (sum of daily objectives): 1.15
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 804574.49 meters (804.57 km)
+  Average daily distance: 160914.90 meters (160.91 km)
+  Daily distances breakdown:
+    Monday: 142405.83 meters (142.41 km)
+    Tuesday: 147392.60 meters (147.39 km)
+    Wednesday: 185257.67 meters (185.26 km)
+    Thursday: 161363.18 meters (161.36 km)
+    Friday: 168155.22 meters (168.16 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.7914
+  Average Customer Satisfaction: 0.7603
+  Average Number of Same Edges/Day (consecutive comparisons): 1.50
+    Edge counts: Tue vs Mon=3, Wed vs Tue=1, Thu vs Wed=2, Fri vs Thu=0
+  Edge Bonus (Total): 0.3000
+  Average Objective Value/Day: 0.7877
+
+alpha 0.6 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 5767.11 minutes
+  Average deviation per customer: 55.45 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.6 (customer weight: 0.6, driver weight: 0.4)
+  Total cost of solution (sum of daily objectives): 1.13
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 818371.32 meters (818.37 km)
+  Average daily distance: 163674.26 meters (163.67 km)
+  Daily distances breakdown:
+    Monday: 142405.83 meters (142.41 km)
+    Tuesday: 147884.12 meters (147.88 km)
+    Wednesday: 181768.54 meters (181.77 km)
+    Thursday: 172940.87 meters (172.94 km)
+    Friday: 173371.96 meters (173.37 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.7931
+  Average Customer Satisfaction: 0.7605
+  Average Number of Same Edges/Day (consecutive comparisons): 1.50
+    Edge counts: Tue vs Mon=3, Wed vs Tue=0, Thu vs Wed=1, Fri vs Thu=2
+  Edge Bonus (Total): 0.3000
+  Average Objective Value/Day: 0.7975
+
+alpha 0.5 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 7800.86 minutes
+  Average deviation per customer: 75.01 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.5 (customer weight: 0.5, driver weight: 0.5)
+  Total cost of solution (sum of daily objectives): 1.33
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 733743.14 meters (733.74 km)
+  Average daily distance: 146748.63 meters (146.75 km)
+  Daily distances breakdown:
+    Monday: 139474.08 meters (139.47 km)
+    Tuesday: 149553.97 meters (149.55 km)
+    Wednesday: 135497.75 meters (135.50 km)
+    Thursday: 151078.12 meters (151.08 km)
+    Friday: 158139.21 meters (158.14 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.8012
+  Average Customer Satisfaction: 0.6672
+  Average Number of Same Edges/Day (consecutive comparisons): 3.00
+    Edge counts: Tue vs Mon=3, Wed vs Tue=4, Thu vs Wed=3, Fri vs Thu=2
+  Edge Bonus (Total): 0.6000
+  Average Objective Value/Day: 0.7942
+
+alpha 0.4 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 6773.94 minutes
+  Average deviation per customer: 65.13 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.4 (customer weight: 0.4, driver weight: 0.6)
+  Total cost of solution (sum of daily objectives): 1.18
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 913906.09 meters (913.91 km)
+  Average daily distance: 182781.22 meters (182.78 km)
+  Daily distances breakdown:
+    Monday: 193051.79 meters (193.05 km)
+    Tuesday: 184063.97 meters (184.06 km)
+    Wednesday: 179297.67 meters (179.30 km)
+    Thursday: 173107.31 meters (173.11 km)
+    Friday: 184385.34 meters (184.39 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.8297
+  Average Customer Satisfaction: 0.6647
+  Average Number of Same Edges/Day (consecutive comparisons): 3.00
+    Edge counts: Tue vs Mon=2, Wed vs Tue=4, Thu vs Wed=4, Fri vs Thu=2
+  Edge Bonus (Total): 0.6000
+  Average Objective Value/Day: 0.8357
+
+alpha 0.3 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 7302.15 minutes
+  Average deviation per customer: 70.21 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.3 (customer weight: 0.3, driver weight: 0.7)
+  Total cost of solution (sum of daily objectives): 1.04
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 923101.30 meters (923.10 km)
+  Average daily distance: 184620.26 meters (184.62 km)
+  Daily distances breakdown:
+    Monday: 186754.37 meters (186.75 km)
+    Tuesday: 190076.83 meters (190.08 km)
+    Wednesday: 178407.27 meters (178.41 km)
+    Thursday: 181668.36 meters (181.67 km)
+    Friday: 186194.47 meters (186.19 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.8420
+  Average Customer Satisfaction: 0.6729
+  Average Number of Same Edges/Day (consecutive comparisons): 3.00
+    Edge counts: Tue vs Mon=3, Wed vs Tue=4, Thu vs Wed=3, Fri vs Thu=2
+  Edge Bonus (Total): 0.6000
+  Average Objective Value/Day: 0.8753
+
+alpha 0.2 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 10197.16 minutes
+  Average deviation per customer: 98.05 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.2 (customer weight: 0.2, driver weight: 0.8)
+  Total cost of solution (sum of daily objectives): 1.18
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 910250.36 meters (910.25 km)
+  Average daily distance: 182050.07 meters (182.05 km)
+  Daily distances breakdown:
+    Monday: 193167.41 meters (193.17 km)
+    Tuesday: 185185.56 meters (185.19 km)
+    Wednesday: 180062.46 meters (180.06 km)
+    Thursday: 168931.51 meters (168.93 km)
+    Friday: 182903.42 meters (182.90 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.8270
+  Average Customer Satisfaction: 0.5161
+  Average Number of Same Edges/Day (consecutive comparisons): 4.50
+    Edge counts: Tue vs Mon=2, Wed vs Tue=5, Thu vs Wed=7, Fri vs Thu=4
+  Edge Bonus (Total): 0.9000
+  Average Objective Value/Day: 0.9088
+
+alpha 0.1 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 104
+  Total time deviation: 11041.94 minutes
+  Average deviation per customer: 106.17 minutes
+  Percentage of available customer-days served: 49.52%
+  Alpha value used: 0.1 (customer weight: 0.1, driver weight: 0.9)
+  Total cost of solution (sum of daily objectives): 0.99
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 927978.79 meters (927.98 km)
+  Average daily distance: 185595.76 meters (185.60 km)
+  Daily distances breakdown:
+    Monday: 189457.67 meters (189.46 km)
+    Tuesday: 193610.90 meters (193.61 km)
+    Wednesday: 182106.23 meters (182.11 km)
+    Thursday: 174619.62 meters (174.62 km)
+    Friday: 188184.37 meters (188.18 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.8378
+  Average Customer Satisfaction: 0.4809
+  Average Number of Same Edges/Day (consecutive comparisons): 4.00
+    Edge counts: Tue vs Mon=2, Wed vs Tue=6, Thu vs Wed=5, Fri vs Thu=3
+  Edge Bonus (Total): 0.8000
+  Average Objective Value/Day: 0.9461
+
+alpha 0.0 with cust prob 0.5
+
+Overall Statistics:
+  Total customers served across all days: 110
+  Total time deviation: 73808.70 minutes
+  Average deviation per customer: 670.99 minutes
+  Percentage of available customer-days served: 52.38%
+  Alpha value used: 0.0 (customer weight: 0.0, driver weight: 1.0)
+  Total cost of solution (sum of daily objectives): 0.26
+  === DISTANCE STATISTICS ===
+  Total distance traveled (all days): 697370.41 meters (697.37 km)
+  Average daily distance: 139474.08 meters (139.47 km)
+  Daily distances breakdown:
+    Monday: 139474.08 meters (139.47 km)
+    Tuesday: 139474.08 meters (139.47 km)
+    Wednesday: 139474.08 meters (139.47 km)
+    Thursday: 139474.08 meters (139.47 km)
+    Friday: 139474.08 meters (139.47 km)
+  === ADDITIONAL METRICS ===
+  Average Driver Satisfaction: 0.9472
+  Average Customer Satisfaction: 0.8681
+  Average Number of Same Edges/Day (consecutive comparisons): 23.00
+    Edge counts: Tue vs Mon=23, Wed vs Tue=23, Thu vs Wed=23, Fri vs Thu=23
+  Edge Bonus (Total): 4.6000
+  Average Objective Value/Day: 1.8672
+
+
+

@@ -1,169 +1,104 @@
-import pandas as pd
-import numpy as np
-from typing import List, Dict
-import os
 import traceback
 from openpyxl import Workbook
 from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
 from openpyxl.utils import get_column_letter
-
-# Import from custom modules
-from customer_data import Customer, TimeWindow, all_customers
-
-# Import from optimization engine
 from optimization_engine import get_optimization_results
-
-# Import constants
-from constants import (
-    BUFFER_MINUTES, DRIVER_START_TIME, DRIVER_FINISH_TIME,
-    ALPHA  # Using ALPHA instead of W_CUSTOMER and W_DRIVER
-)
+from constants import (BUFFER_MINUTES, ALPHA)
 from time_utils import calculate_customer_satisfaction
-from satisfaction_metrics import calculate_working_time
 
-
-def format_time(minutes):
-    """Format minutes to HH:MM"""
+def format_time(minutes): #format time
     hours = int(minutes // 60)
     mins = int(minutes % 60)
     return f"{hours:02d}:{mins:02d}"
 
-
-def create_routes_comparison_sheet(wb, all_routes, all_arrival_times, days):
-    """Create a sheet showing all five routes side by side"""
-    print("Creating routes comparison sheet...")
-
+def create_routes_comparison_sheet(wb, all_routes, all_arrival_times, days): #sheet showing five routes side by side
     ws = wb.create_sheet("Routes Comparison")
     ws.title = "Routes Comparison"
 
-    # Set column widths
-    for col in range(1, 16):  # Assuming 3 columns per day (ID, Time Window, Arrival)
-        ws.column_dimensions[get_column_letter(col)].width = 12
-
-    # Create header row with day names
-    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
+    for col in range(1, 16): ws.column_dimensions[get_column_letter(col)].width = 12 #column widths
+    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid") #create headers
     header_font = Font(bold=True)
-
-    # Define header rows
     ws.cell(row=1, column=1, value="Route Comparison").font = Font(bold=True, size=14)
-    ws.cell(row=1, column=6, value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
-
+    ws.cell(row=1, column=6,
+            value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
     col = 1
     for day in days:
         ws.merge_cells(start_row=2, start_column=col, end_row=2, end_column=col + 2)
         ws.cell(row=2, column=col, value=day).font = header_font
         ws.cell(row=2, column=col).alignment = Alignment(horizontal='center')
         ws.cell(row=2, column=col).fill = header_fill
-
         ws.cell(row=3, column=col, value="Stop #").font = header_font
         ws.cell(row=3, column=col).fill = header_fill
-
         ws.cell(row=3, column=col + 1, value="Customer ID").font = header_font
         ws.cell(row=3, column=col + 1).fill = header_fill
-
         ws.cell(row=3, column=col + 2, value="Arrival Time").font = header_font
         ws.cell(row=3, column=col + 2).fill = header_fill
-
         col += 3
 
-    # Find the maximum number of stops in any route
-    max_stops = max([len(route) for route in all_routes])
-
-    # Fill in the data for each day
+    max_stops = max([len(route) for route in all_routes]) #data for each day
     for day_idx, day in enumerate(days):
         route = all_routes[day_idx]
         arrival_times = all_arrival_times[day_idx]
-
         col = day_idx * 3 + 1
 
-        # Fill in stop information
         for stop_idx in range(len(route)):
             customer = route[stop_idx]
-            row = stop_idx + 4  # Starting from row 4 (after headers)
-
-            # Stop number (0 is depot, so use "D" for clarity)
+            row = stop_idx + 4
             ws.cell(row=row, column=col, value="D" if customer.id == 0 else stop_idx)
-
-            # Customer ID
             ws.cell(row=row, column=col + 1, value=customer.id)
-
-            # Arrival time
             if stop_idx < len(arrival_times):
                 arrival_time = arrival_times[stop_idx]
                 ws.cell(row=row, column=col + 2, value=format_time(arrival_time))
 
-    # Add summary at the bottom
-    summary_row = max_stops + 5
+    summary_row = max_stops + 5 #summary
     ws.cell(row=summary_row, column=1, value="Summary").font = Font(bold=True)
 
     for day_idx, day in enumerate(days):
         col = day_idx * 3 + 1
         route = all_routes[day_idx]
-
-        # Number of customers served (excluding depot at start and end)
         customers_served = len(route) - 2
         ws.cell(row=summary_row + 1, column=col, value="Customers:")
         ws.cell(row=summary_row + 1, column=col + 1, value=customers_served)
-
-        # Route duration
         if len(all_arrival_times[day_idx]) >= 2:
             start_time = all_arrival_times[day_idx][0]
             end_time = all_arrival_times[day_idx][-1]
-            duration_mins = end_time - start_time
-            duration_hrs = duration_mins / 60
-
+            duration_hrs = (end_time - start_time) / 60
             ws.cell(row=summary_row + 2, column=col, value="Duration:")
             ws.cell(row=summary_row + 2, column=col + 1, value=f"{duration_hrs:.2f} hrs")
-
             ws.cell(row=summary_row + 3, column=col, value="Start:")
             ws.cell(row=summary_row + 3, column=col + 1, value=format_time(start_time))
-
             ws.cell(row=summary_row + 4, column=col, value="End:")
             ws.cell(row=summary_row + 4, column=col + 1, value=format_time(end_time))
-
     return ws
 
-
-def create_customer_details_sheet(wb, all_routes, all_arrival_times, days):
-    """Create a sheet with customer service details"""
-    print("Creating customer service details sheet...")
-
+def create_customer_details_sheet(wb, all_routes, all_arrival_times, days): #customer service details
     ws = wb.create_sheet("Customer Service Details")
     ws.title = "Customer Service Details"
 
-    # Set column widths
     columns = ["Customer ID", "Day", "Time Window", "Arrival Time", "Status", "Deviation", "Satisfaction"]
     for col in range(1, len(columns) + 1):
         ws.column_dimensions[get_column_letter(col)].width = 15
 
-    # Create header row
-    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
+    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid") #create headers
     header_font = Font(bold=True)
-
     ws.cell(row=1, column=1, value="Customer Service Details").font = Font(bold=True, size=14)
-    ws.cell(row=1, column=3, value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
-
+    ws.cell(row=1, column=3,
+            value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
     for col, header in enumerate(columns, 1):
         ws.cell(row=2, column=col, value=header).font = header_font
         ws.cell(row=2, column=col).fill = header_fill
 
-    # Fill in the data
-    row = 3
+    row = 3 #data
     for day_idx, day in enumerate(days):
         route = all_routes[day_idx]
         arrival_times = all_arrival_times[day_idx]
-
-        # Skip depot at start and end
-        for i in range(1, len(route) - 1):
+        for i in range(1, len(route) - 1):  #without depot
             customer = route[i]
             arrival_time = arrival_times[i]
             time_window = customer.time_windows[day_idx]
-
-            # Calculate satisfaction
             satisfaction = calculate_customer_satisfaction(arrival_time, time_window, BUFFER_MINUTES)
 
-            # Determine status and deviation
-            if arrival_time < time_window.start:
+            if arrival_time < time_window.start: #status and deviation
                 deviation = time_window.start - arrival_time
                 status = "Early"
             elif arrival_time > time_window.end:
@@ -173,23 +108,19 @@ def create_customer_details_sheet(wb, all_routes, all_arrival_times, days):
                 deviation = 0
                 status = "On Time"
 
-            # Format time window and deviation
-            time_window_str = f"{format_time(time_window.start)}-{format_time(time_window.end)}"
+            time_window_str = f"{format_time(time_window.start)}-{format_time(time_window.end)}" #format data
             deviation_str = f"{deviation // 60}h {deviation % 60}m" if deviation > 0 else "0m"
 
-            # Color-code satisfaction
             if satisfaction >= 0.9:
-                sat_fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")  # Light green
+                sat_fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
             elif satisfaction >= 0.7:
-                sat_fill = PatternFill(start_color="C1FFC1", end_color="C1FFC1", fill_type="solid")  # Pale green
+                sat_fill = PatternFill(start_color="C1FFC1", end_color="C1FFC1", fill_type="solid")
             elif satisfaction >= 0.5:
-                sat_fill = PatternFill(start_color="FFFF99", end_color="FFFF99", fill_type="solid")  # Light yellow
+                sat_fill = PatternFill(start_color="FFFF99", end_color="FFFF99", fill_type="solid")
             elif satisfaction >= 0.3:
-                sat_fill = PatternFill(start_color="FFB347", end_color="FFB347", fill_type="solid")  # Orange
+                sat_fill = PatternFill(start_color="FFB347", end_color="FFB347", fill_type="solid")
             else:
-                sat_fill = PatternFill(start_color="FF6961", end_color="FF6961", fill_type="solid")  # Red
-
-            # Write data to sheet
+                sat_fill = PatternFill(start_color="FF6961", end_color="FF6961", fill_type="solid")
             ws.cell(row=row, column=1, value=customer.id)
             ws.cell(row=row, column=2, value=day)
             ws.cell(row=row, column=3, value=time_window_str)
@@ -198,169 +129,104 @@ def create_customer_details_sheet(wb, all_routes, all_arrival_times, days):
             ws.cell(row=row, column=6, value=deviation_str)
             ws.cell(row=row, column=7, value=f"{satisfaction:.2f}")
             ws.cell(row=row, column=7).fill = sat_fill
-
             row += 1
-
     return ws
 
-
-def create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisited_customers, days):
-    """Create a sheet showing which customers are served on which days"""
-    print("Creating customers by day sheet...")
-
+def create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisited_customers, days): #which customers are served on which days
     ws = wb.create_sheet("Customers By Day")
     ws.title = "Customers By Day"
 
-    # Set column widths
-    ws.column_dimensions['A'].width = 15  # Customer ID
-    for col in range(2, 7):  # 5 days
+    ws.column_dimensions['A'].width = 15 #column widths
+    for col in range(2, 7):
         ws.column_dimensions[get_column_letter(col)].width = 15
 
-    # Create header row
-    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid")
+    header_fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3", fill_type="solid") #headers
     header_font = Font(bold=True)
-
     ws.cell(row=1, column=1, value="Customer Visits By Day").font = Font(bold=True, size=14)
-    ws.cell(row=1, column=3, value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
-
+    ws.cell(row=1, column=3,
+            value=f"Alpha = {ALPHA} (Customer weight: {ALPHA}, Driver weight: {1.0 - ALPHA})").font = Font(bold=True)
     ws.cell(row=2, column=1, value="Customer ID").font = header_font
     ws.cell(row=2, column=1).fill = header_fill
-
     for col, day in enumerate(days, 2):
         ws.cell(row=2, column=col, value=day).font = header_font
         ws.cell(row=2, column=col).fill = header_fill
 
-    # Collect all unique customer IDs (excluding depot)
-    all_customer_ids = set()
+    all_customer_ids = set() #all unique customer IDs
     for day_idx in range(len(days)):
         route = all_routes[day_idx]
         for customer in route:
-            if customer.id != 0:  # Exclude depot
+            if customer.id != 0:
                 all_customer_ids.add(customer.id)
-
-        # Include unvisited customers
         for customer in all_unvisited_customers[day_idx]:
             all_customer_ids.add(customer.id)
-
-    # Sort customer IDs
     sorted_customer_ids = sorted(all_customer_ids)
 
-    # Create dictionary to map customer IDs to rows
-    customer_rows = {}
+    customer_rows = {} #customer ID rows
     for i, customer_id in enumerate(sorted_customer_ids):
-        row = i + 3  # Starting from row 3
+        row = i + 3
         customer_rows[customer_id] = row
         ws.cell(row=row, column=1, value=customer_id)
 
-    # Fill in the data for each day
-    for day_idx, day in enumerate(days):
+    for day_idx, day in enumerate(days): #filling data for each day
         route = all_routes[day_idx]
         arrival_times = all_arrival_times[day_idx]
-        col = day_idx + 2  # Column for this day
+        col = day_idx + 2
 
-        # Mark visited customers
-        for i in range(1, len(route) - 1):  # Skip depot
+        for i in range(1, len(route) - 1): #mark visited customers, skip depot
             customer = route[i]
             row = customer_rows[customer.id]
             arrival_time = arrival_times[i]
+            satisfaction = calculate_customer_satisfaction(arrival_time, customer.time_windows[day_idx], BUFFER_MINUTES)
 
-            # Calculate satisfaction
-            satisfaction = calculate_customer_satisfaction(
-                arrival_time,
-                customer.time_windows[day_idx],
-                BUFFER_MINUTES
-            )
-
-            # Color code cell by satisfaction
-            if satisfaction >= 0.9:
-                fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")  # Light green
+            if satisfaction >= 0.9: #colorcoading satisfaction
+                fill = PatternFill(start_color="90EE90", end_color="90EE90", fill_type="solid")
             elif satisfaction >= 0.7:
-                fill = PatternFill(start_color="C1FFC1", end_color="C1FFC1", fill_type="solid")  # Pale green
+                fill = PatternFill(start_color="C1FFC1", end_color="C1FFC1", fill_type="solid")
             elif satisfaction >= 0.5:
-                fill = PatternFill(start_color="FFFF99", end_color="FFFF99", fill_type="solid")  # Light yellow
+                fill = PatternFill(start_color="FFFF99", end_color="FFFF99", fill_type="solid")
             elif satisfaction >= 0.3:
-                fill = PatternFill(start_color="FFB347", end_color="FFB347", fill_type="solid")  # Orange
+                fill = PatternFill(start_color="FFB347", end_color="FFB347", fill_type="solid")
             else:
-                fill = PatternFill(start_color="FF6961", end_color="FF6961", fill_type="solid")  # Red
-
-            # Add arrival time and format the cell
+                fill = PatternFill(start_color="FF6961", end_color="FF6961", fill_type="solid")
             ws.cell(row=row, column=col, value=format_time(arrival_time))
             ws.cell(row=row, column=col).fill = fill
 
-        # Mark unvisited customers as "Not Visited"
-        for customer in all_unvisited_customers[day_idx]:
-            row = customer_rows[customer.id]
-            if ws.cell(row=row, column=col).value is None:
-                ws.cell(row=row, column=col, value="Not Visited")
-                ws.cell(row=row, column=col).fill = PatternFill(start_color="D3D3D3", end_color="D3D3D3",
-                                                                fill_type="solid")  # Gray
-
-    # Add a summary at the bottom
-    summary_row = len(sorted_customer_ids) + 4
+    summary_row = len(sorted_customer_ids) + 4 #summary
     ws.cell(row=summary_row, column=1, value="Summary").font = Font(bold=True)
-
-    # Count visits by day
     for day_idx, day in enumerate(days):
         col = day_idx + 2
         route = all_routes[day_idx]
-
-        visits = len(route) - 2  # Exclude depot at start and end
+        visits = len(route) - 2
         total_customers = len(sorted_customer_ids)
         percent_served = (visits / total_customers) * 100 if total_customers > 0 else 0
 
         ws.cell(row=summary_row + 1, column=1, value="Customers Served:")
         ws.cell(row=summary_row + 1, column=col, value=visits)
-
         ws.cell(row=summary_row + 2, column=1, value="Total Customers:")
         ws.cell(row=summary_row + 2, column=col, value=total_customers)
-
         ws.cell(row=summary_row + 3, column=1, value="Percent Served:")
         ws.cell(row=summary_row + 3, column=col, value=f"{percent_served:.1f}%")
-
     return ws
 
+def create_excel_report(): #create excel workbook
+    print(f"Generating Excel report for alpha = {ALPHA}.")
 
-def create_excel_report():
-    """Create an Excel workbook with multiple sheets for the route optimization results"""
-    try:
-        print("Starting Excel report generation...")
-        print(f"Using alpha = {ALPHA} for satisfaction weighting")
+    results = get_optimization_results()
+    all_routes = results['routes']
+    all_arrival_times = results['arrival_times']
+    days = results['days']
+    all_unvisited_customers = results['unvisited_customers']
 
-        # Get optimization results from central engine
-        results = get_optimization_results()
-        all_routes = results['routes']
-        all_arrival_times = results['arrival_times']
-        days = results['days']
-        all_unvisited_customers = results['unvisited_customers']
+    wb = Workbook() #create workbook
+    wb.remove(wb.active)  #remove default sheet
 
-        # Create a new workbook
-        wb = Workbook()
+    create_routes_comparison_sheet(wb, all_routes, all_arrival_times, days) #create sheets
+    create_customer_details_sheet(wb, all_routes, all_arrival_times, days)
+    create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisited_customers, days)
 
-        # Remove the default sheet
-        default_sheet = wb.active
-        wb.remove(default_sheet)
-
-        # Create the comparison sheet (routes side by side)
-        create_routes_comparison_sheet(wb, all_routes, all_arrival_times, days)
-
-        # Create the customer service details sheet
-        create_customer_details_sheet(wb, all_routes, all_arrival_times, days)
-
-        # Create the customers by day sheet
-        create_customers_by_day_sheet(wb, all_routes, all_arrival_times, all_unvisited_customers, days)
-
-        # Save the workbook
-        filename = f"route_optimization_report_alpha_{ALPHA}.xlsx"
-        wb.save(filename)
-        print(f"Excel report saved to {filename}")
-
-        return True
-
-    except Exception as e:
-        print(f"Error generating Excel report: {str(e)}")
-        traceback.print_exc()
-        return False
-
+    filename = f"route_optimization_report_alpha_{ALPHA}.xlsx" #save
+    wb.save(filename)
+    print(f"Excel report saved: {filename}")
 
 if __name__ == "__main__":
     create_excel_report()
